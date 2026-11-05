@@ -1,0 +1,67 @@
+{
+  "name": "dsh-project-sources",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Codex-style project sources for DeepSeek Harness: attach extra folders to one workspace, give each an alias, and let the agent read, write and run commands across all of them.",
+  "keywords": [
+    "dsh-plugin",
+    "dsh",
+    "deepseek-harness",
+    "project-sources",
+    "multi-folder",
+    "workspace"
+  ],
+  "license": "MIT",
+  "author": "YanGuoHong <guohong.yan@funpluspartners.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanguohong1/dsh-project-sources.git"
+  },
+  "homepage": "https://github.com/yanguohong1/dsh-project-sources#readme",
+  "bugs": {
+    "url": "https://github.com/yanguohong1/dsh-project-sources/issues"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "lib/native-picker.ps1",
+    "locale/*.json",
+    "icon.svg",
+    "NOTICE",
+    "CHANGELOG.md"
+  ],
+  "icon": "./icon.svg",
+  "engines": {
+    "node": ">=20",
+    "dsh": "^0.2.1-rc.5"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "scripts": {
+    "test": "node test/smoke.mjs && node test/skills.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-api-gateway",
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-input-trigger"
+      ]
+    }
+  }
+}

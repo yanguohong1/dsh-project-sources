@@ -1,0 +1,10 @@
+dsh-project-sources
+Copyright (c) 2026 YanGuoHong
+
+This product includes a design adapted from software developed as part of
+dsh-multi-folder (https://github.com/AngelosZou/dsh-multi-folder),
+Copyright (c) Yutong Zou, licensed under the MIT License.
+
+The tool-interception and sandbox re-rooting approach in index.js follows that
+project; the source-folder model, aliases, project editor, `@` menu group and
+skill discovery are original to this package.

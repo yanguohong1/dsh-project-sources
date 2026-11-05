@@ -1,0 +1,11 @@
+# dsh-project-sources bundle patch.
+#
+# Inserts the plugin row at the profile root. Nothing else: the row owns both
+# halves (editor + interception + `@` discovery + source-folder skills).
+#
+# NOTE: this plugin intercepts the write/edit/pwsh/bash pipeline. It cannot
+# coexist with another plugin that intercepts the same tools for the same
+# paths (e.g. dsh-multi-folder) — pick one.
+- insert:
+    - id: project-sources
+      name: 'dsh-project-sources'

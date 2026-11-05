@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Project Sources",
+    "description": "Codex-style project sources: attach extra folders to a workspace, give each an alias, and let the agent read, write and run commands across all of them."
+  }
+}

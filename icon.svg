@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Project sources">
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#1f2a44"/>
+  <path d="M14 22a4 4 0 0 1 4-4h10l4 4h14a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4Z" fill="#4c6ef5"/>
+  <path d="M22 30h20M22 36h20M22 42h13" stroke="#dfe6ff" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="46" cy="44" r="9" fill="#7ee0c0"/>
+  <path d="M42 44h8M46 40v8" stroke="#123027" stroke-width="2.4" stroke-linecap="round"/>
+</svg>
