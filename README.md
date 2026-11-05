@@ -78,6 +78,9 @@ node test/smoke.mjs   # config store, interception, prompt, remote API
 node test/skills.mjs  # source-folder skill discovery
 ```
 
+Release workflow (version bump, npm publish with passkey, rollback, pitfalls)
+is documented in [docs/RELEASING.md](docs/RELEASING.md) (Chinese).
+
 ## Acknowledgements
 
 The tool-interception and sandbox re-rooting approach follows

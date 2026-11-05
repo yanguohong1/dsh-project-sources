@@ -78,6 +78,9 @@ node test/smoke.mjs   # 配置存储、拦截、提示词、remote API
 node test/skills.mjs  # 源目录技能发现
 ```
 
+修改与发版流程（改版本号、npm 发布与通行密钥验证、回滚、常见坑）见
+[docs/RELEASING.md](docs/RELEASING.md)。
+
 ## 致谢
 
 工具拦截与沙箱重定根的思路参考了 [dsh-multi-folder](https://github.com/AngelosZou/dsh-multi-folder)（作者 Yutong Zou，MIT），详见 `NOTICE`。
