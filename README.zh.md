@@ -1,5 +1,8 @@
 # dsh-project-sources
 
+[![npm version](https://img.shields.io/npm/v/dsh-project-sources.svg)](https://www.npmjs.com/package/dsh-project-sources)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **中文** | [English](README.md)
 
 > 给 DeepSeek Harness 的工作区附加多个文件夹：一个工作区、多个源目录，每个都有别名，模型可直接引用。

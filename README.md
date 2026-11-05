@@ -1,5 +1,8 @@
 # dsh-project-sources
 
+[![npm version](https://img.shields.io/npm/v/dsh-project-sources.svg)](https://www.npmjs.com/package/dsh-project-sources)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 [中文](README.zh.md) | **English**
 
 > Codex-style project sources for DeepSeek Harness: one workspace, many folders, each with an alias the agent can use.
