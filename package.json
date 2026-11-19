@@ -1,6 +1,6 @@
 {
   "name": "dsh-project-sources",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Codex-style project sources for DeepSeek Harness: attach extra folders to one workspace, give each an alias, and let the agent read, write and run commands across all of them.",
   "keywords": [
