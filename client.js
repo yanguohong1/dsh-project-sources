@@ -688,7 +688,7 @@ window.__ModuleLoader__.load({
               if (!workspace) return Promise.resolve([]);
               const raw = String(request.query || '');
               return sourcesFor(workspace).then(function (sources) {
-                return rpc('listFiles', { workspace: workspace, query: effectiveQuery(raw, sources) }).then(
+                return rpc('listFiles', { workspace: workspace, query: effectiveQuery(raw, sources) }, request.signal).then(
                   function (value) {
                     const items = value && Array.isArray(value.candidates) ? value.candidates.slice() : [];
                     const merged = folderCandidates(raw, sources, items).concat(items);

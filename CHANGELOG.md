@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Apply Git ignore rules to `@` filename search in the workspace and attached sources, without a separate search-limit bundle.
+
 ## 0.1.0 — 2026-11-05
 
 Initial release.

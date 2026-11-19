@@ -31,6 +31,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
 import os from 'node:os'
+import { gitFileSearch } from './lib/git-files.js'
 
 export const name = 'dsh-project-sources'
 export const inject = ['fs', 'sandboxPolicy', 'systemPrompt']
@@ -103,6 +104,32 @@ export function apply(ctx) {
   const projects = new Map()
   /** wsKey(workspace) -> { at, rootKey, entries } */
   const indexCache = new Map()
+  const gitFiles = gitFileSearch()
+  ctx.effect(() => gitFiles.dispose, 'project-sources: Git file index')
+
+  ctx.inject(['fileReferences', 'workingDirectory'], (scope) => {
+    const service = scope.fileReferences
+    const original = service.list
+    const own = Object.getOwnPropertyDescriptor(service, 'list')
+    // The Host RPC reads this method on each call. Leave its service, session
+    // candidates and path browsing intact; restore the method on unload.
+    async function list(agent, query, signal) {
+      if (query && !/[/\\]/.test(query)) {
+        const root = await scope.workingDirectory.ensure(agent, signal)
+        const hits = await gitFiles.list(root, query, 20, signal)
+        if (hits !== null) return hits
+      }
+      return Reflect.apply(original, this, [agent, query, signal])
+    }
+    scope.effect(() => {
+      Object.defineProperty(service, 'list', { value: list, configurable: true, writable: true })
+      return () => {
+        if (Object.getOwnPropertyDescriptor(service, 'list')?.value !== list) return
+        if (own) Object.defineProperty(service, 'list', own)
+        else delete service.list
+      }
+    }, 'project-sources: Git file references')
+  })
 
   // ----------------------------------------------------------- normalizing
   /**
@@ -275,10 +302,8 @@ export function apply(ctx) {
   }
 
   // ------------------------------------------------ @ discovery (listFiles)
-  // The shipped `@` provider is single-root by construction: it walks the
-  // session cwd and refuses every candidate outside it, so a source folder is
-  // invisible to it no matter what is typed. This index feeds a companion
-  // menu group instead; the shipped group is never touched.
+  // The native group owns workspace-relative matches. The companion group
+  // adds source aliases, absolute paths and bare matches in attached folders.
 
   const MAX_LEVEL_ENTRIES = 400
   const MAX_INDEX_ENTRIES = 4000
@@ -289,10 +314,10 @@ export function apply(ctx) {
     'bin', 'obj', '.idea', '.vscode', 'coverage', '.turbo',
   ])
 
-  /** Breadth-first bounded index over every source except the workspace. */
-  async function indexFor(project) {
+  /** Breadth-first bounded index for attached folders without Git. */
+  async function indexFor(project, sources) {
     const key = wsKey(project.workspace)
-    const rootKey = project.sources.map((source) => wsKey(source.path)).join('|')
+    const rootKey = JSON.stringify(sources.map(({ path, alias }) => [path, alias]))
     const cached = indexCache.get(key)
     const now = Date.now()
     if (cached !== undefined && cached.rootKey === rootKey && now - cached.at < INDEX_TTL_MS) {
@@ -300,9 +325,7 @@ export function apply(ctx) {
     }
     const entries = []
     const seen = new Set()
-    const queue = project.sources
-      .filter((source) => wsKey(source.path) !== wsKey(project.workspace))
-      .map((source) => ({ source, dir: source.path, rel: '' }))
+    const queue = sources.map((source) => ({ source, dir: source.path, rel: '' }))
     while (queue.length > 0 && entries.length < MAX_INDEX_ENTRIES) {
       const level = queue.shift()
       let dirTarget
@@ -412,7 +435,9 @@ export function apply(ctx) {
    * source (what a directory drill inserts). A bare fragment fuzzy-ranks the
    * whole index.
    */
-  const coreListFiles = async (ws, query) => {
+  const coreListFiles = async (ws, query, signal) => {
+    if (typeof ws !== 'string' || !isAbsolute(ws)) throw new Error('listFiles requires an absolute workspace path')
+    signal?.throwIfAborted()
     const project = await loadProject(ws)
     if (project === null) throw new Error('listFiles requires an absolute workspace path')
     const sources = project.sources
@@ -510,11 +535,33 @@ export function apply(ctx) {
             }))
         : []
 
-    const index = await indexFor(project)
+    const attached = sources.filter((source) => wsKey(source.path) !== wsKey(project.workspace))
+    const matching = await Promise.all(attached.map((source) =>
+      gitFiles.list(source.path, q, MAX_LEVEL_ENTRIES, signal).catch((error) => {
+        signal?.throwIfAborted()
+        ctx.logger?.warn('project-sources: Git file search failed: %s', error.message)
+        return []
+      }),
+    ))
+    const plain = attached.filter((source, i) => matching[i] === null && !pathInside(source.path, project.workspace))
+    const gitRows = attached.flatMap(({ alias, path: dir }, i) => (matching[i] ?? []).map(({ path: rel, kind }) =>
+      ({ alias, dir, rel, kind, path: slashed(join(dir, rel)) }),
+    ))
+    const index = plain.length === 0 ? [] : await indexFor(project, plain)
     const visible = q.startsWith('.') ? index : index.filter((entry) => !entry.rel.split('/').some((segment) => segment.startsWith('.')))
-    const seen = new Set(folderRows.map((row) => wsKey(row.path)))
-    const fileRows = rankEntries(visible, q).filter((entry) => !seen.has(wsKey(slashed(entry.path))))
-    out.candidates = folderRows.concat(fileRows).slice(0, MAX_LEVEL_ENTRIES)
+    const workspacePath = slashed(project.workspace).replace(/\/+$/, '')
+    const overlap = gitRows.some(({ path }) => pathInside(path, workspacePath))
+    const nativePaths = overlap ? await gitFiles.paths(project.workspace, signal).catch(() => null) : null
+    signal?.throwIfAborted()
+    const seen = new Set()
+    const rows = folderRows.concat(rankEntries(visible.concat(gitRows), q)).filter(({ path, rel }) => {
+      const key = wsKey(path)
+      if (seen.has(key) || (rel !== '' && pathInside(path, workspacePath) && nativePaths?.has(path.slice(workspacePath.length + 1)))) return false
+      seen.add(key)
+      return true
+    })
+    out.truncated = rows.length > MAX_LEVEL_ENTRIES
+    out.candidates = rows.slice(0, MAX_LEVEL_ENTRIES)
     return out
   }
 
@@ -669,9 +716,9 @@ export function apply(ctx) {
         throw new Error(remoteErrorMessage(e))
       }
     },
-    async listFiles(workspace, query) {
+    async listFiles(workspace, query, signal) {
       try {
-        return await coreListFiles(workspace, query)
+        return await coreListFiles(workspace, query, signal)
       } catch (e) {
         throw new Error(remoteErrorMessage(e))
       }
@@ -707,7 +754,7 @@ export function apply(ctx) {
     invocations: [
       remoteInvocation('get', ['workspace']),
       remoteInvocation('set', ['workspace', 'payload']),
-      remoteInvocation('listFiles', ['workspace', 'query']),
+      { ...remoteInvocation('listFiles', ['workspace', 'query']), cancellation: { parameter: 'signal' } },
       { ...remoteInvocation('pick', []), cancellation: { parameter: 'signal' } },
     ],
   }

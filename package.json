@@ -33,6 +33,7 @@
     "client.js",
     "cordis.patch.yml",
     "lib/native-picker.ps1",
+    "lib/git-files.js",
     "locale/*.json",
     "icon.svg",
     "NOTICE",
@@ -47,7 +48,7 @@
     "@deepseek-ai/cordis": "^4.0.1"
   },
   "scripts": {
-    "test": "node test/smoke.mjs && node test/skills.mjs"
+    "test": "node test/smoke.mjs && node test/skills.mjs && node test/git-files.mjs"
   },
   "dsh": {
     "bundle": {

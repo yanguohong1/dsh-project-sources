@@ -11,7 +11,7 @@ A DeepSeek Harness plugin bundle that attaches extra folders to a workspace. The
 
 - **Project editor** — “编辑项目” dialog from the session header, or the “📁 项目源文件夹” pill on the session-creation page. Add folders, rename aliases, remove them.
 - **Aliases in the conversation** — one system-prompt section maps every alias to its absolute path, so `@web/src/a.ts` is unambiguous to the model.
-- **`@` menu coverage** — the shipped `@` provider is single-root; this plugin contributes a companion group that searches every source (by alias, by folder name, or by absolute path).
+- **`@` menu coverage** — search the workspace and attached sources by filename, or browse with `@alias/` or an absolute path. Filename search in Git working trees skips ignored untracked files and includes tracked files and unignored new files. Other folders and explicit path browsing keep their existing behavior.
 - **Source-folder skills** — `/` finds skills under `<source>/.dsh/skills`, `<source>/.agents/skills` and `<source>/skills`, recursively.
 - **No new tools** — `read`/`glob`/`grep` already work anywhere; `write`/`edit`/`pwsh`/`bash` are intercepted and re-rooted at the matching source.
 
@@ -71,7 +71,7 @@ The sandbox re-rooting, `@` menu and skill discovery are platform-neutral. macOS
 
 ## Development
 
-No build step. `npm test` runs both suites without the DSH runtime:
+No build step. `npm test` runs without the DSH runtime (Git is needed for the search test):
 
 ```bash
 node test/smoke.mjs   # config store, interception, prompt, remote API
